@@ -28,7 +28,7 @@ class sp_attention_gather(Function):
     @staticmethod
     def backward(ctx,grad):
         if ctx.world_size==1:
-            return grad
+            return grad, None, None, None, None
         else:
             length_pre_gpu=ctx.max_length//ctx.device_map[1]
             input_list=[grad[:,length_pre_gpu*i:length_pre_gpu*(i+1),:,:].contiguous() for i in range(ctx.device_map[1])]
@@ -62,7 +62,7 @@ class sp_attention_reduce(Function):
         ctx.device_map=device_map
         ctx.max_length=max_length
         if ctx.world_size==1:
-            return input_data
+            return input_data, None, None, None, None
         else:
             length_pre_gpu=ctx.max_length//device_map[1]
             input_list=[input_data[:,length_pre_gpu*i:length_pre_gpu*(i+1),:,:].contiguous() for i in range(device_map[1])]
