@@ -55,7 +55,7 @@ dataloader = DataLoader(
     )
 model=MyQwen3_4B(config,device_map,rank,my_fsdp_group,my_ddp_group,config['training']['max_length'])
 model.monkey_patch()
-model=model_distribution(model,my_fsdp_group,my_ddp_group,rank)
+model=model_distribution(model,my_fsdp_group,my_ddp_group,rank,device_map)
 optimizer = torch.optim.AdamW(model.parameters(), lr=config['training']['learning_rating'])
 
 fsdp_rank=(int(os.environ["RANK"])%device_map[1])
