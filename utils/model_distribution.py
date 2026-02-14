@@ -1,5 +1,7 @@
 import torch 
 import yaml
+import torch.nn as nn
+from torch.distributed.device_mesh import DeviceMesh
 from model.sp_qwen3 import MyQwen3_4B
 from torch.distributed.device_mesh import init_device_mesh
 import torch.distributed as dist
@@ -11,31 +13,8 @@ from torch.utils.data import Dataset, DataLoader, DistributedSampler
 from dataset.mydataset import MyDataset
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-def model_distribution(model,fsdp_group,ddp_group,rank):
-    for i in range(len(model.model.layers)):
-        model.model.layers[i]=FSDP(
-            model.model.layers[i],
-            process_group=fsdp_group,
-            sharding_strategy=ShardingStrategy.FULL_SHARD,
-            device_id=rank,
-        )
-    model.model.embed_tokens=FSDP(
-            model.model.embed_tokens,
-            process_group=fsdp_group,
-            sharding_strategy=ShardingStrategy.FULL_SHARD,
-            device_id=rank,
-        )
-    
-    fsdp_model = FSDP(
-        model,
-        process_group=fsdp_group,
-        sharding_strategy=ShardingStrategy.FULL_SHARD,
-        device_id=rank,
-    )
-
-    ddp_fsdp_model = DDP(
-        fsdp_model,
-        process_group=ddp_group,  # 关键：指定DDP使用的进程组
-        device_ids=[rank],
-    )
+def model_distribution(model,fsdp_group,ddp_group,rank,device_map):
+    auto_wrap_policy=ModuleWrapPolicy({nn.Linear})
+    mesh=DeviceMesh("cuda",torch.arrange(dist.get_world_size()).view(device_map),mesh_dim_names=("ddp,fsdp"))
+    ddp_fsdp_model=FSDP(model,sharding_strategy=ShardingStrategy.HYBRID_SHARD,device_mesh=mesh,auto_wrap_policy=auto_wrap_policy,device_id=rank)
     return ddp_fsdp_model
