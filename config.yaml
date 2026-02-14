@@ -1,0 +1,18 @@
+model:
+  name: "Qwen3-4B"
+  model_path: "./checkpoint/old_checkpoint/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/eb25fbe4f35f7147763bc24445679d1c00588d89"
+  dtype: torch.bfloat16
+  tokenzier_path: "./checkpoint/old_checkpoint/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/eb25fbe4f35f7147763bc24445679d1c00588d89"
+
+training:
+  load_type: "full"
+  device_map: [2,4]
+  max_length: 4096
+  batch_size: 2
+  learning_rating: 0.0001
+  epoch: 1
+  seed: 2026
+
+data:
+  data_name: "gsm8k"
+  data_path: "./data/datasets--openai--gsm8k/snapshots/cc7b047b6e5bb11b4f1af84efc572db110a51b3c/main"
